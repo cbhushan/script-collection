@@ -1,11 +1,13 @@
 #!/bin/sh
 #
 # This script removes duplicate entries from ~/.bash_history while preserving their order 
-# and retaining the last entry for duplicate commands. 
+# and retaining the last entry for duplicate commands. It can be executed repeatedly as
+# cronjob at an appropriate interval. 
 #
-# It can be executed repeated as cronjob at an appropriate interval. 
+# Other similar solutions: http://unix.stackexchange.com/q/48713
 #
-# More solutions: http://unix.stackexchange.com/q/48713
+# Copyright 2017 C Bhushan; Licensed under the Apache License v2.0.
+# https://github.com/cbhushan/script-collection
 #
 
 
