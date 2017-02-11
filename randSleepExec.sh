@@ -19,6 +19,7 @@ shift
 
 rand_sec=$((RANDOM % MAXWAIT))
 echo $(date +%d-%b-%Y-%T)" - Sleeping (randomly) for $rand_sec seconds before executing $1 ..."
-/bin/sleep $rand_sec
 
+sleep $rand_sec
 exec $*
+
