@@ -3,6 +3,8 @@ This repository contains a subset of (Linux) scripts that I use frequently and a
 
 * [`uniquify-bash-history.sh`](https://github.com/cbhushan/script-collection/blob/master/uniquify-bash-history.sh) - Removes duplicate entries from bash history while preserving their order and retaining the latest dupicate entry. 
 
+* [`randSleepExec.sh`](https://github.com/cbhushan/script-collection/blob/master/randSleepExec.sh) - Sleeps for a random time before executing the passed commands with arguments.
+
 ## License
    Copyright 2017 C Bhushan
 

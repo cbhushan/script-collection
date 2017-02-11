@@ -8,6 +8,7 @@
 # https://github.com/cbhushan/script-collection
 #
 
+# Usage
 if [ $# -lt 2 ] ; then
     echo "$0 <Max-wait-sec> <Command> [<arg1> <arg2> ... <argN>]" >&2
     exit 1
