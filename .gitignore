@@ -1,0 +1,23 @@
+# emacs generated files
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+.\#*
+
+
+# Python - Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+
+# Office files
+.~lock.*#
+*.tmp
+~$*.doc*
+~$*.xls*
+*.xlk
+~$*.ppt*
+
+
