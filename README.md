@@ -5,6 +5,9 @@ This repository contains a subset of (Linux) scripts that I use frequently and a
 
 * [**randSleepExec.sh**](https://github.com/cbhushan/script-collection/blob/master/randSleepExec.sh) - Sleeps for a random time before executing the passed commands with arguments.
 
+* [**GIMP-plugins**](https://github.com/cbhushan/script-collection/tree/master/GIMP-plugins) - Set of plugins I developed while playing around with [GIMP](https://www.gimp.org/) to simplify life.
+
+
 ## License
    Copyright 2017 C Bhushan
 
