@@ -37,7 +37,7 @@
 	(gimp-image-convert-grayscale image)
 	)
 
-    (set! hist (get-hist drawable 0 bin_width))
+    (set! hist (get-hist drawable 0 (round bin_width))) ;; round to ensure integer bin_width
     (set! thresh (get-otsu-threshold hist))
     (gimp-threshold drawable thresh 255)
     (gimp-image-convert-indexed image 0 3 2 0 1 "ignoredtext")
@@ -138,14 +138,14 @@
 
 (script-fu-register "script-fu-otsu-threshold"
   "Otsu threshold - binarize Image"
-  "Apply Otsu thresholding to binarize image."
+  "Otsu thresholding to binarize image. Resulting image is an indexed image with 2-color mono-palette. Histogram bin width should be an integer (1 <= histogram-bin-width <= 8). A wider histogram bin would make computation faster with small effect on binarized image."
   "C Bhushan"
   "C Bhushan - MIT License"
   "2017"
-  "RGB*"
+  "*"
   SF-IMAGE        "image"      0
   SF-DRAWABLE     "drawable"   0
-  SF-ADJUSTMENT   "Bin width"  (list 2 1 5 1 1 0 SF-SLIDER)
+  SF-ADJUSTMENT   "Histogram bin width"  (list 4 1 8 1 1 0 SF-SPINNER)
 )
 
 (script-fu-menu-register "script-fu-otsu-threshold"
