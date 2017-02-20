@@ -26,25 +26,24 @@
 ;; SOFTWARE.
 
 
-(define (script-fu-otsu-threshold image)
+(define (script-fu-otsu-threshold image drawable bin_width)
   (gimp-undo-push-group-start image)
-  (let* ((drawable (car (gimp-image-flatten image)))
-	 (thresh 100)
+  (let* ((thresh 127)
+	 (hist)
 	 )
+    (set! drawable (car (gimp-image-flatten image)))
     (gimp-layer-flatten drawable)
-    (gimp-image-convert-grayscale image)
-					;(if (gimp-drawable-is-gray drawable)
-					;   ()
-					;
-					;     )
-    (let* ((hist (get-hist drawable 0))
-	   )
-      (set! thresh (get-otsu-threshold hist))
-      )
+    (if (not (gimp-drawable-is-gray drawable))
+	(gimp-image-convert-grayscale image)
+	)
+
+    (set! hist (get-hist drawable 0 bin_width))
+    (set! thresh (get-otsu-threshold hist))
     (gimp-threshold drawable thresh 255)
     (gimp-image-convert-indexed image 0 3 2 0 1 "ignoredtext")
     )
   (gimp-undo-push-group-end image)
+  (gimp-displays-flush)
   )
 
 ;; Returns the Otsu threshold
@@ -111,14 +110,25 @@
 
 
 ;; Get the histogram count in an array
-(define (get-hist drawable chan)
+;; chan - channel of drawable; 0 for grayscale images
+;; bin_width - integer>0; generally in range [1 5];
+;;             bin_width of 1 is at full resolution of 256 bins; values>1 should be faster to compute
+(define (get-hist drawable chan bin_width)
   (let* (
 	 (i 0)
 	 (hist (make-vector 256))
-	 )
+	 (i_step (- bin_width 1))
+	 (hg 0) )
     (set! i 0)
     (while (< i 256)
-	   (vector-set! hist i (car (cddddr (gimp-histogram drawable chan i i))))
+	   (if (= (modulo i bin_width) 0)
+	       (begin
+		 (set! hg (+ i i_step))
+		 (if (> hg 255) (set! hg 255) )
+		 (vector-set! hist i (car (cddddr (gimp-histogram drawable chan i hg))))
+		 )
+	       (vector-set! hist i 0)
+	       )
 	   (set! i (+ i 1))
 	   )
     hist
@@ -132,12 +142,12 @@
   "C Bhushan"
   "C Bhushan - MIT License"
   "2017"
-  "*"
-  SF-IMAGE      "The image"   0
-;  SF-DRAWABLE   "The drawable"   0
-  SF-TOGGLE     "Anti-aliasing (AA)"      FALSE
-  SF-ADJUSTMENT "AA strength" (list 1 0 20 1 10 1 SF-SLIDER)
+  "RGB*"
+  SF-IMAGE        "image"      0
+  SF-DRAWABLE     "drawable"   0
+  SF-ADJUSTMENT   "Bin width"  (list 2 1 5 1 1 0 SF-SLIDER)
 )
 
 (script-fu-menu-register "script-fu-otsu-threshold"
                          "<Image>/Filters/Scanned Document")
+

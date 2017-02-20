@@ -1,5 +1,9 @@
 #!/bin/bash
 # Installs GIMP plugins to user's gimp plugin directory
+#
+# Copyright 2017 C Bhushan; Licensed under the Apache License v2.0.
+# https://github.com/cbhushan/script-collection
+#
 
 srcDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 targetDir="$HOME"/".gimp-2.8"
