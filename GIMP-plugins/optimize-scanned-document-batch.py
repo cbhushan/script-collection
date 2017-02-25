@@ -29,7 +29,7 @@ def optimize_scanned_document_batch(inputFolder, outputFolder, crop_img, pre_blu
       
       # crop if required
       if crop_img > 0:
-        xres, yres = pdb.gimp_image_get_resolution(img)                
+        xres, yres = pdb.gimp_image_get_resolution(img)
         if xres > 0:
           if crop_img == 1: # Letter size
             xinch = 8.5
@@ -43,8 +43,10 @@ def optimize_scanned_document_batch(inputFolder, outputFolder, crop_img, pre_blu
               
           imgW = int(math.ceil(xres*xinch))
           imgH = int(math.ceil(yres*yinch))
-          pdb.gimp_image_crop(img, imgW, imgH, 0, 0)
-              
+          curr_imgW = pdb.gimp_image_width(img)
+          curr_imgH = pdb.gimp_image_height(img)
+          pdb.gimp_image_crop(img, min(imgW, curr_imgW), min(imgH, curr_imgH), 0, 0)
+          
         else: # can't read resolution?
           gimp.message("Could not read resolution. Will skip the image croping.")
 
@@ -52,7 +54,7 @@ def optimize_scanned_document_batch(inputFolder, outputFolder, crop_img, pre_blu
       # Blurring if required
       if blur_radius>0:
         if pre_blur == 1: # Selective Gaussian
-          pdb.plug_in_sel_gauss(img, layer, blur_radius, math.round(blur_max_delta))
+          pdb.plug_in_sel_gauss(img, layer, blur_radius, round(blur_max_delta))
         
         elif pre_blur ==2: # Regular Gaussian blurring
           pdb.plug_in_gauss(img, layer, blur_radius, blur_radius, 1)
@@ -61,6 +63,7 @@ def optimize_scanned_document_batch(inputFolder, outputFolder, crop_img, pre_blu
       # Otsu thresholding / posterize
       if num_colors == 2: # binary, otsu thresholding
         pdb.script_fu_otsu_threshold(img, layer, 4)
+        layer = pdb.gimp_image_get_active_layer(img)
 
       else: # more than 2 colors, saved as png
         pdb.gimp_brightness_contrast(layer, -22, 20) # First try to increase contrast a bit
@@ -75,11 +78,11 @@ def optimize_scanned_document_batch(inputFolder, outputFolder, crop_img, pre_blu
 
       # Save output image
       if num_colors == 2: # save as tiff with CCITT G4 Fax compression
-        outputPath = os.path.joint(outputFolder, filename + ".tiff")
+        outputPath = os.path.join(outputFolder, filename + ".tiff")
         pdb.file_tiff_save(img, layer, outputPath, outputPath, 6) 
 
       else: # more than 2 colors, save as png
-        outputPath = os.path.joint(outputFolder, filename + ".png")
+        outputPath = os.path.join(outputFolder, filename + ".png")
         pdb.file_png_save(img, layer, outputPath, outputPath, 0, 9, 0, 0, 0, 0, 1)
                 
       
