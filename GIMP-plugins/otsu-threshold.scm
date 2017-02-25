@@ -1,30 +1,12 @@
-;; Largely based on
+;; Otsu thresholding to binarize image.
+;; 
+;; Largely based on:
 ;; * gimp_histogram_get_threshold() in https://github.com/GNOME/gimp/blob/fc9da4c9a394ef981a32973e9ee6f82a224905e2/app/core/gimphistogram.c
 ;; * http://stackoverflow.com/a/8462738
 ;;
-;; Released under MIT License
+;; Copyright 2017 C Bhushan; Licensed under the Apache License v2.0.
 ;; https://github.com/cbhushan/script-collection
 ;;
-;; Copyright (c) 2017 C Bhushan
-;;
-;; Permission is hereby granted, free of charge, to any person obtaining a copy
-;; of this software and associated documentation files (the "Software"), to deal
-;; in the Software without restriction, including without limitation the rights
-;; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-;; copies of the Software, and to permit persons to whom the Software is
-;; furnished to do so, subject to the following conditions:
-;;
-;; The above copyright notice and this permission notice shall be included in all
-;; copies or substantial portions of the Software.
-;;
-;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-;; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-;; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-;; SOFTWARE.
-
 
 (define (script-fu-otsu-threshold image drawable bin_width)
   (gimp-undo-push-group-start image)
@@ -111,7 +93,7 @@
 
 ;; Get the histogram count in an array
 ;; chan - channel of drawable; 0 for grayscale images
-;; bin_width - integer>0; generally in range [1 5];
+;; bin_width - integer>0; generally in range [1 8].
 ;;             bin_width of 1 is at full resolution of 256 bins; values>1 should be faster to compute
 ;;             Effective number of histogram bins = 256/bin_width
 (define (get-hist drawable chan bin_width)
