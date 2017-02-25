@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 #
+# Batch optimization of scanned documents - See register() below for more details.
+#
 # Copyright 2017 C Bhushan; Licensed under the Apache License v2.0.
 # https://github.com/cbhushan/script-collection
 #
@@ -98,7 +100,7 @@ def optimize_scanned_document_batch(inputFolder, outputFolder, crop_img, pre_blu
 register(
   "optimize-scanned-document-batch",
   "Batch optimization of scanned documents.",
-  "Batch cleanup of scanned image (of documents) to produce 1bpp image outputs.",
+  "Batch cleanup of scanned images (of documents) to produce output images that substancially smaller in size. When Number-of-colors is 2 Otsu thresholding is used, otherwise gimp's posterization is used. Output images can optionally be cropped to Letter size(1), Half Letter(2), or A4 size(3). The images can optionally be first blurred with Selective Gaussian(1) or regular Gaussian(2) method.",
   "C Bhushan - https://github.com/cbhushan/script-collection/",
   "C Bhushan - Apache License v2.0",
   "2017",
@@ -107,13 +109,13 @@ register(
   [
     (PF_DIRNAME, "inputFolder", "Image source folder", ""),
     (PF_DIRNAME, "outputFolder", "Output folder", ""),
-    (PF_OPTION,  "crop_img", "Crop image to:", 0, ["Don't crop", "Letter size", "Half Letter", "A4 size"]),
-    (PF_OPTION,  "pre_blur", "First blur with:", 0, ["No blurring", "Selective Gaussian", "Gaussian (isotropic)"]),
-    (PF_SPINNER, "blur_radius", "Blur radius:", 4, (1, 20, 1)),
-    (PF_SLIDER,  "blur_max_delta", "Blur max delta:", 50, (0, 255, 1)),
-    (PF_SPINNER, "num_colors", "Number of colors:", 2, (2, 255, 1)),
-    (PF_TOGGLE,  "set_DPI", "Set resolution?", 0),
-    (PF_INT,     "DPI_input", "Resolution (in DPI):", 0)
+    (PF_OPTION,  "crop_img", "Crop image to", 0, ["Don't crop", "Letter size", "Half Letter", "A4 size"]),
+    (PF_OPTION,  "pre_blur", "First blur with", 0, ["No blurring", "Selective Gaussian", "Gaussian (isotropic)"]),
+    (PF_SPINNER, "blur_radius", "Blur radius", 4, (1, 20, 1)),
+    (PF_SLIDER,  "blur_max_delta", "Blur max delta", 50, (0, 255, 1)),
+    (PF_SPINNER, "num_colors", "Number of colors", 2, (2, 255, 1)),
+    (PF_TOGGLE,  "set_DPI", "Set resolution", 0),
+    (PF_INT,     "DPI_input", "Resolution (in DPI)", 0)
   ],
   [],
   optimize_scanned_document_batch)
