@@ -113,6 +113,7 @@
 ;; chan - channel of drawable; 0 for grayscale images
 ;; bin_width - integer>0; generally in range [1 5];
 ;;             bin_width of 1 is at full resolution of 256 bins; values>1 should be faster to compute
+;;             Effective number of histogram bins = 256/bin_width
 (define (get-hist drawable chan bin_width)
   (let* (
 	 (i 0)
@@ -138,7 +139,7 @@
 
 (script-fu-register "script-fu-otsu-threshold"
   "Otsu threshold - binarize Image"
-  "Otsu thresholding to binarize image. Resulting image is an indexed image with 2-color mono-palette. Histogram bin width should be an integer (1 <= histogram-bin-width <= 8). A wider histogram bin would make computation faster with small effect on binarized image."
+  "Otsu thresholding to binarize image. Resulting image is an indexed image with 2-color mono-palette. Histogram bin width should be an integer (1 <= histogram-bin-width <= 8). A wider histogram bin would make computation faster with small effect on binarized image. Effective number of histogram bins is approximately 256/histogram-bin-width."
   "C Bhushan"
   "C Bhushan - MIT License"
   "2017"
