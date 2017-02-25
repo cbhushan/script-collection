@@ -32,7 +32,8 @@
 ;; * N. Otsu, "A threshold selection method from gray-level histograms,"
 ;;     IEEE Trans. Systems, Man, and Cybernetics, vol. 9, no. 1, pp. 62-66, 1979.
 ;; * https://en.wikipedia.org/wiki/Otsu's_method
-(define (get-otsu-threshold hist) 
+(define (get-otsu-threshold hist)
+  (gimp-progress-set-text "Otsu - threshold estimate")
   (let*
       (
        (hist_max (vector-ref hist 0))
@@ -97,6 +98,7 @@
 ;;             bin_width of 1 is at full resolution of 256 bins; values>1 should be faster to compute
 ;;             Effective number of histogram bins = 256/bin_width
 (define (get-hist drawable chan bin_width)
+  (gimp-progress-set-text "Otsu - histogram estimate")
   (let* (
 	 (i 0)
 	 (hist (make-vector 256))
