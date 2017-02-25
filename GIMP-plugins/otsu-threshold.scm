@@ -122,8 +122,8 @@
 (script-fu-register "script-fu-otsu-threshold"
   "Otsu threshold - binarize Image"
   "Otsu thresholding to binarize image. Resulting image is an indexed image with 2-color mono-palette. Histogram bin width should be an integer (1 <= histogram-bin-width <= 8). A wider histogram bin would make computation faster with small effect on binarized image. Effective number of histogram bins is approximately 256/histogram-bin-width."
-  "C Bhushan"
-  "C Bhushan - MIT License"
+  "C Bhushan - https://github.com/cbhushan/script-collection/"
+  "C Bhushan - Apache License v2.0"
   "2017"
   "*"
   SF-IMAGE        "image"      0
