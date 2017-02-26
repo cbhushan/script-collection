@@ -10,7 +10,7 @@ import os
 import math
 from gimpfu import *
 
-def optimize_scanned_document_batch(inputFolder, outputFolder, crop_img, pre_blur, blur_radius, blur_max_delta, num_colors, set_DPI, DPI_input):
+def optimize_scanned_document_batch(inputFolder, outputFolder, crop_img, intensity_stretch, pre_blur, blur_radius, blur_max_delta, num_colors, set_DPI, DPI_input):
   
   # Iterate the folder; not recursively!
   file_list = os.walk(inputFolder).next()[2]
@@ -52,13 +52,21 @@ def optimize_scanned_document_batch(inputFolder, outputFolder, crop_img, pre_blu
         else: # can't read resolution?
           gimp.message("Could not read resolution. Will skip the image croping.")
 
-          
-      # Blurring if required
+
+      # Stretch contrast (should slightly improve performance of otsu_threshold below, as it is not run at full bin resolution)
+      if intensity_stretch == 1: # Rescale intensity from low 0.6 %tile to high 0.6 %tile using histogram.
+        pdb.gimp_levels_stretch(layer)  # This will fail with images with very little content!
+        
+      elif intensity_stretch == 2:
+        pdb.plug_in_c_astretch(img, layer) # Rescale intesity from min-max intensity
+
+        
+      # Blurring if required      
       if blur_radius>0:
         if pre_blur == 1: # Selective Gaussian
           pdb.plug_in_sel_gauss(img, layer, blur_radius, round(blur_max_delta))
         
-        elif pre_blur ==2: # Regular Gaussian blurring
+        elif pre_blur == 2: # Regular Gaussian blurring
           pdb.plug_in_gauss(img, layer, blur_radius, blur_radius, 1)
   
 
@@ -68,7 +76,6 @@ def optimize_scanned_document_batch(inputFolder, outputFolder, crop_img, pre_blu
         layer = pdb.gimp_image_get_active_layer(img)
 
       else: # more than 2 colors, saved as png
-        pdb.gimp_brightness_contrast(layer, -22, 20) # First try to increase contrast a bit
         pdb.gimp_posterize(layer, num_colors)
         pdb.gimp_image_convert_indexed(img, 0, 0, num_colors, 1, 1, 'ignoredtext') # Optimal palette for num_colors
 
@@ -100,7 +107,7 @@ def optimize_scanned_document_batch(inputFolder, outputFolder, crop_img, pre_blu
 register(
   "optimize-scanned-document-batch",
   "Batch optimization of scanned documents.",
-  "Batch cleanup of scanned images (of documents) to produce output images that substancially smaller in size. When Number-of-colors is 2 Otsu thresholding is used, otherwise gimp's posterization is used. Output images can optionally be cropped to Letter size(1), Half Letter(2), or A4 size(3). The images can optionally be first blurred with Selective Gaussian(1) or regular Gaussian(2) method.",
+  "Batch cleanup of scanned images (of documents) to produce output images that substancially smaller in size. When Number-of-colors is 2 Otsu thresholding is used, otherwise gimp's posterization is used. Output images can optionally be cropped to Letter size(1), Half Letter(2), or A4 size(3). Contrast stretching can optionally be applied using 0.6 prcentile (low and high) intensities(1) or min-max intensities(2). Input images can optionally be first blurred with Selective Gaussian(1) or regular Gaussian(2) method.",
   "C Bhushan - https://github.com/cbhushan/script-collection/",
   "C Bhushan - Apache License v2.0",
   "2017",
@@ -110,6 +117,7 @@ register(
     (PF_DIRNAME, "inputFolder", "Image source folder", ""),
     (PF_DIRNAME, "outputFolder", "Output folder", ""),
     (PF_OPTION,  "crop_img", "Crop image to", 0, ["Don't crop", "Letter size", "Half Letter", "A4 size"]),
+    (PF_OPTION,  "intensity_stretch", "Stretch contrast with", 1, ["No stretching", "0.6% Low-High", "Min - Max"]),
     (PF_OPTION,  "pre_blur", "First blur with", 0, ["No blurring", "Selective Gaussian", "Gaussian (isotropic)"]),
     (PF_SPINNER, "blur_radius", "Blur radius", 4, (1, 20, 1)),
     (PF_SLIDER,  "blur_max_delta", "Blur max delta", 50, (0, 255, 1)),
