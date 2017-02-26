@@ -54,7 +54,7 @@ def optimize_scanned_document_batch(inputFolder, outputFolder, crop_img, intensi
 
 
       # Stretch contrast (should slightly improve performance of otsu_threshold below, as it is not run at full bin resolution)
-      if intensity_stretch == 1: # Rescale intensity from low 0.6 %tile to high 0.6 %tile using histogram.
+      if intensity_stretch == 1: # Rescale intensity from low 0.6 %tile to high 0.6 %tile; see gimp_levels_config_stretch_channel() in gimplevelsconfig.c
         pdb.gimp_levels_stretch(layer)  # This will fail with images with very little content!
         
       elif intensity_stretch == 2:
