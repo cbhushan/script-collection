@@ -1,5 +1,6 @@
 ;; Otsu thresholding to binarize image.
-;; 
+;; On installation it appears in Menu 'Filters > Scanned Document > Otsu threshold - binarize Image'. Histogram bin width is the only input, which should be an integer (1 <= histogram-bin-width <= 8). A wider histogram bin would make computation faster with small effect on resulting binary image. Effective number of histogram bins is approximately 256/histogram-bin-width. Resulting image is an indexed image with 2-color mono-palette.
+;;
 ;; Largely based on:
 ;; * gimp_histogram_get_threshold() in https://github.com/GNOME/gimp/blob/fc9da4c9a394ef981a32973e9ee6f82a224905e2/app/core/gimphistogram.c
 ;; * http://stackoverflow.com/a/8462738
