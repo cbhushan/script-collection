@@ -149,7 +149,6 @@ if __name__ == "__main__":
                       help='When used output filename is prefixed with datetime. Only used with --offset-time.')
 
   args = parser.parse_args()
-  print(args)
 
   if not os.path.isdir(args.output_dir):
     raise ValueError('--output-dir must be an existing directory!')
@@ -161,7 +160,7 @@ if __name__ == "__main__":
     input_dir = os.path.abspath(hd)
 
     if input_dir == output_dir:
-       raise ValueError('--output-dir must be a different directory than existing directory!')
+       raise ValueError('--output-dir must be a different directory from source-image directory!')
 
     print('Original exif data: ')
     print_exif(img_file)
@@ -174,21 +173,34 @@ if __name__ == "__main__":
     print_exif(saved_file)
 
   elif os.path.isdir(args.input):
-    dirname = os.path.abspath(args.input)
-    files = os.walk(dirname).next()[2]
+    input_dir = os.path.abspath(args.input)
+    files = os.walk(input_dir).next()[2]
     files.sort()
 
-    header = 'filename,%s'%header
-    print(header)
+    if input_dir == output_dir:
+       raise ValueError('--output-dir must be a different directory from source-image directory!')
+
+    failed_processing = []
     for fn in files:
       rt, ext = os.path.splitext(fn)
       ext = ext.lower()
-      if ext in ['.jpg', '.jpeg', '.tiff', '.png']:
-        image = Image.open(os.path.join(dirname, fn))
-        exif_data = get_exif_data(image)
-        exif_str, _ = get_exif_str_dict(exif_data)
-        print('%s,%s'%(fn,exif_str))
+      if ext in ['.jpg', '.jpeg']:
+        print('%s...'%fn)
+        img_file = os.path.join(input_dir, fn)
+        out_file = os.path.join(output_dir, fn)
+        try:
+          saved_file = save_with_updated_metadata(img_file, args.geo_tag, args.offset_time,
+                                                  out_file, args.prefix_filename_with_date)
+        except:
+          failed_processing.append(fn)
+          print('Error while processing:')
+          print(traceback.format_exc())
+          print('\n')
 
+    if len(failed_processing)>0:
+      print('Following files failed processing: ')
+      for fn in failed_processing:
+        print(fn)
   else:
     raise ValueError('File not found')
 
