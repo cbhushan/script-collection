@@ -30,10 +30,10 @@ else
     exit 1
 fi
 
-if [ "$#" -ne 2 ]; then
+if [ "$#" -lt 2 ] || [ "$#" -gt 3 ] ; then
     echo "Incorrect usage: Illegal number of parameters!"
-    echo -e "\nThis script renamed image file using date from exif information"
-    echo -e "Usage:\n\t $0 </path/to/src-directory> </path/to/destination-directory>"
+    echo -e "\nThis script renamed image file using date from exif information."
+    echo -e "Usage:\n\t $0 </path/to/src-directory> </path/to/destination-directory> [--use-random]"
     exit 1
 fi
 
@@ -47,16 +47,27 @@ fi
 mkdir -p "$2"
 destdir=$(cd "$2"; pwd)
 
+if [ "$#" -eq 3 ] && [ "$3" = "--use-random" ] ; then
+    use_random=true
+else
+    use_random=false
+fi
+
 shopt -s nullglob # Sets nullglob
 shopt -s nocaseglob # Sets nocaseglob
 
 failed_files=()
 for file in "$srcdir"/*.{jpg,jpeg,png} ; do
-    echo "$file ..."
-
+    if [ "$use_random" = true ] ; then
+	suffix=$(randomString 12)
+    else
+	filename=$(basename -- "$file")
+	suffix="${filename%.*}"
+    fi
+    
     cmd="$EXIFTOOL \
     	 '-FileName<DateTimeOriginal' \
-	 -d %Y%m%d_%H%M%S_%%f.%%e \
+	 -d %Y%m%d_%H%M%S_$suffix.%%e \
          -o $destdir \
          \"$file\""
     
