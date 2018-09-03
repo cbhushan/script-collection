@@ -57,7 +57,7 @@ shopt -s nullglob # Sets nullglob
 shopt -s nocaseglob # Sets nocaseglob
 
 failed_files=()
-for file in "$srcdir"/*.{jpg,jpeg,png} ; do
+for file in "$srcdir"/*.{jpg,jpeg,png,mov,mp4} ; do
     if [ "$use_random" = true ] ; then
 	suffix=$(randomString 12)
     else
@@ -66,7 +66,7 @@ for file in "$srcdir"/*.{jpg,jpeg,png} ; do
     fi
     
     cmd="$EXIFTOOL \
-    	 '-FileName<DateTimeOriginal' \
+    	 '-FileName<CreateDate' \
 	 -d %Y%m%d_%H%M%S_$suffix.%%e \
          -o $destdir \
          \"$file\""
