@@ -22,3 +22,12 @@ isEmptyDirectory() {
 programExists() {
     type "$1" &> /dev/null ;
 }
+
+
+# Returns random string of specified length (default/max length is 32)
+# Similar to https://gist.github.com/earthgecko/3089509
+function randomString {
+    UUID=$(cat /proc/sys/kernel/random/uuid | tr -dc 'a-zA-Z0-9')
+    LENGTH=${1:-36}
+    echo ${UUID:0:$LENGTH}
+}
