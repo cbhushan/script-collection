@@ -1,6 +1,6 @@
 #!/bin/bash
 # Renames image files by using exif date information to following format:
-#    %Y%m%d_%H%M%S_origfilename.ext
+#    %Y%m%d_%H%M%S_xxxxxxxxxx.ext
 #
 # It uses exiftool for all operations.
 #
@@ -47,6 +47,11 @@ fi
 mkdir -p "$2"
 destdir=$(cd "$2"; pwd)
 
+if [ "$srcdir" -ef "$destdir" ] ; then
+    echo "Error: Source and destination directories must be different!"
+    exit 1
+fi
+
 if [ "$#" -eq 3 ] && [ "$3" = "--use-random" ] ; then
     use_random=true
 else
@@ -58,28 +63,39 @@ shopt -s nocaseglob # Sets nocaseglob
 
 failed_files=()
 for file in "$srcdir"/*.{jpg,jpeg,png,mov,mp4} ; do
+    filename=$(basename -- "$file")
+    extension="${filename##*.}"
     if [ "$use_random" = true ] ; then
 	suffix=$(randomString 12)
     else
-	filename=$(basename -- "$file")
 	suffix="${filename%.*}"
     fi
     
-    cmd="$EXIFTOOL \
-    	 '-FileName<CreateDate' \
-	 -d %Y%m%d_%H%M%S_$suffix.%%e \
-         -o $destdir \
-         \"$file\""
+    date_str=$("$EXIFTOOL" -d '%Y%m%d_%H%M%S' -DateTimeOriginal -s3 "$file")
+    if [ -z "$date_str" ] ; then
+	date_str=$("$EXIFTOOL" -d '%Y%m%d_%H%M%S' -CreateDate -s3 "$file")
+    fi
     
-    echo -e "\t$cmd"
+    if [ -n "$date_str" ] ; then
+	new_name="$destdir"/"$date_str"_"$suffix"."$extension"
+    else
+	new_name="$destdir"/"$filename"
+    fi
+
+    cmd="cp -d --preserve=all \"$file\" \"$new_name\""
+    echo "$cmd"
+
     eval "$cmd"
     if [ $? -ne 0 ]; then
 	failed_files+=("$file\n")
-    fi    
+    fi
 done
 
 shopt -u nocaseglob # Unsets nocaseglob
 shopt -u nullglob # Unsets nullglob
 
-echo "Failed files:"
-echo "${failed_files[@]}"
+if [ ${#failed_files[@]} -gt 0 ] ; then
+    echo "Failed files:"
+    echo "${failed_files[@]}"
+fi
+
