@@ -1,5 +1,5 @@
 # Script-collection
-This repository contains a subset of (Linux) scripts that I use frequently and are general enough to be released publicly. Purpose of each script is described below in short.
+This repository contains (a subset) of scripts that I use frequently and are probably general enough for wider use. Purpose of each script is described below in short.
 
 * [**uniquify-bash-history.sh**](https://github.com/cbhushan/script-collection/blob/master/uniquify-bash-history.sh) - Removes duplicate entries from bash history while preserving their order and retaining the latest dupicate entry. 
 
@@ -9,7 +9,7 @@ This repository contains a subset of (Linux) scripts that I use frequently and a
 
 
 ## License
-   Copyright 2017 C Bhushan
+   Copyright C Bhushan
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -22,4 +22,8 @@ This repository contains a subset of (Linux) scripts that I use frequently and a
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
+
+### bashmenot License
+Some scripts make use of incredible bash library [bashmenot](https://github.com/mietek/bashmenot), which is released under BSD 3-Clause License 
+(see [bashmenot/LICENSE](./bashmenot/LICENSE)).
