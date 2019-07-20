@@ -1,5 +1,5 @@
-#!/bin/bash
-# Library of commonly used operations. This should be reusable in other bash scripts.
+# Library of commonly used operations. This should be reusable in other bash scripts by sourcing this script:
+#   source bash-functions.sh
 #
 # Note that boolean bash functions return 0 for True! Because bash interprets it as error code.
 #
@@ -66,7 +66,8 @@ assert_program_is_available() {
 
 
 #######################################
-# Generates random string using pure bash. random_string() should be preferred over this function.
+# Generates random string using pure bash of specified length (default length is 32). 
+# random_string() should be preferred over this function.
 # This is a fall-back when /dev/urandom is not available.
 # Usage: 
 #     bash_random_string [<length>]
@@ -77,19 +78,27 @@ assert_program_is_available() {
 #
 bash_random_string()
 {
-	local N B len
+    local N B len
     expect_args len -- "$@" 32
-	for (( N=0; N < $len; ++N ))
-	do
-		B=$(( $RANDOM%16 ))
+    for (( N=0; N < $len; ++N ))
+    do
+        B=$(( $RANDOM%16 ))
         printf '%x' $B
-	done
+    done
 }
 
 
 #######################################
-# Returns random string of specified length (default length is 32)
+# Returns random string of specified length (default length is 32).
+# Note: Do NOT use for passwords. Use `pwgen -s` for passwords
 # Similar to https://gist.github.com/earthgecko/3089509
+# Usage: 
+#     random_string [<length>]
+# Returns:
+#     Random string of requested length
+# Example:
+#     echo "$(random_string)"
+#
 function random_string {
     local len
     expect_args len -- "$@" 32
@@ -101,7 +110,7 @@ function random_string {
         local N S
         N=$(( 1 + $len/32 ))
         for (( N=0; N < $len; ++N ))
-	    do
+        do
             S+=$(uuidgen | tr -dc 'a-zA-Z0-9' | head -c $len)
         done
         echo "$S" | head -c $len
@@ -111,51 +120,44 @@ function random_string {
 }
 
 
-# Copy file-folder to destination, preserving the original path structure after /.
+#######################################
+# Copy file/folder to destination, preserving the original path structure after /.
 # This is intended for backup purposes. Eg: 
 #   /etc/fstab        -->   $BACKUPDIR/etc/fstab
 #   $HOME/.filezilla  -->   $BACKUPDIR/$HOME/.filezilla
+# Usage: 
+#     backup_to_destination </path/to/file> </path/to/backup/folder> 
+# Returns:
+#     NA
+# Example:
+#     backup_to_destination ~/.ssh /mnt/backup-folder
+#
 backup_to_destination () {
-    if [ $# -ne 2 ]; then
-	echo "[ERROR] ${FUNCNAME} needs exactly two parameters!"
-	echo "   Usage:  ${FUNCNAME} </path/to/file> </path/to/backup/folder>"
-	return 1
-	
-    elif [ ! -e "${1}" ]; then
-	local FNAME="${1}"
+    local FNAME BACKUPDIR
+    expect_args FNAME BACKUPDIR -- "$@"
+    echo "FNAME: ${FNAME}"
+    echo "BACKUPDIR: ${BACKUPDIR}"
+    expect_existing "${FNAME}" "${BACKUPDIR}"
 
+    BACKUPDIR="$(realpath "${BACKUPDIR}")"
+    FNAME="$(realpath "${FNAME}")"
+
+    if [ -f "${BACKUPDIR}" ]; then
+        echo "[ERROR] Backup-folder must be a folder. Regular file found: ${BACKUPDIR}"
+        return 1
     fi
+
+    TARGET_DIR="${BACKUPDIR}$(dirname "${FNAME}")"
+    mkdir -p "${TARGET_DIR}"
     
-    if [ -e "${1}" ]; then
-	local FNAME="${1}"
+    if [ -d "${FNAME}" ]; then
+        # cp -R --preserve=timestamps "$FNAME" "$TARGET_DIR"/
+        DIR_NAME="$(cd "${FNAME}" && pwd)"  # make sure does not end in slash
+        rsync --recursive --links --perms --times --quiet --delete --delete-after "${DIR_NAME}" "${TARGET_DIR}"/
+    elif [ -f "${FNAME}" ]; then          
+        cp --preserve=timestamps "${FNAME}" "${TARGET_DIR}"/
     else
-	echo "[ERROR] File/folder does not exist: ${1}"
-	return 1
-    fi
-
-    if [ -f "${2}" ]; then
-	echo "[ERROR] Backup-folder must be a folder. Regular file found: ${2}"
-	return 1
-    else
-	mkdir -p "${2}"
-	local BACKUPDIR="$(cd "${2}")"
-    fi
-
-    if [ -e "$FNAME" ]; then # FNAME exists, could be file or folder
-        TARGET_DIR="$BACKUPDIR"$(dirname "$FNAME")
-        mkdir -p "$TARGET_DIR"
-        
-        if [ -d "$FNAME" ]; then
-            # cp -R --preserve=timestamps "$FNAME" "$TARGET_DIR"/
-            DIR_NAME=$(cd "$FNAME" && pwd)  # make sure does not end in slash
-            rsync --recursive --links --perms --times --quiet --delete --delete-after "$DIR_NAME" "$TARGET_DIR"/
-        elif [ -f "$FNAME" ]; then          
-            cp --preserve=timestamps "$FNAME" "$TARGET_DIR"/
-        else
-            echo "File/folder is neither a regular file or directory: $FNAME"
-        fi
-    else
-        echo "File/folder not found: $FNAME"
+        echo "[WARNING] Skipping as the file/folder is neither a regular file or directory: ${FNAME} "
     fi
 }
 
