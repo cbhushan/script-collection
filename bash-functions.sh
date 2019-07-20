@@ -135,8 +135,6 @@ function random_string {
 backup_to_destination () {
     local FNAME BACKUPDIR
     expect_args FNAME BACKUPDIR -- "$@"
-    echo "FNAME: ${FNAME}"
-    echo "BACKUPDIR: ${BACKUPDIR}"
     expect_existing "${FNAME}" "${BACKUPDIR}"
 
     BACKUPDIR="$(realpath "${BACKUPDIR}")"
