@@ -97,7 +97,7 @@ function random_string {
         </dev/urandom tr -dc 'a-zA-Z0-9' | head -c $len
 
     elif program_is_available uuidgen ; then
-        # this is slow !
+        # this may be slow !
         local N S
         N=$(( 1 + $len/32 ))
         for (( N=0; N < $len; ++N ))
@@ -115,7 +115,7 @@ function random_string {
 # This is intended for backup purposes. Eg: 
 #   /etc/fstab        -->   $BACKUPDIR/etc/fstab
 #   $HOME/.filezilla  -->   $BACKUPDIR/$HOME/.filezilla
-backupFileFolder () {
+backup_to_destination () {
     if [ $# -ne 2 ]; then
 	echo "[ERROR] ${FUNCNAME} needs exactly two parameters!"
 	echo "   Usage:  ${FUNCNAME} </path/to/file> </path/to/backup/folder>"
