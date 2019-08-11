@@ -14,20 +14,15 @@ script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
 if [ -n "$EXIFTOOL" ]; then # env set & none empty
     if ! [ -x "$EXIFTOOL" ]; then
-	echo "EXIFTOOL executable does not exists or not executable: $EXIFTOOL"
-	echo "EXIFTOOL environment variable is not set correctly. It must be set in order to use $0"
-	echo "exiting.."
-	exit 1
-    fi
-    
-elif programExists exiftool ; then
-    EXIFTOOL="$(command -v exiftool)"
-
-else
-    echo "Cannot find exiftool on current path"
-    echo "exiftool tool must be installed or EXIFTOOL variable should be set correctly in order to use $0"
+    echo "EXIFTOOL executable does not exists or not executable: $EXIFTOOL"
+    echo "EXIFTOOL environment variable is not set correctly. It must be set in order to use $0"
     echo "exiting.."
     exit 1
+    fi
+    
+else
+    assert_program_is_available exiftool
+    EXIFTOOL="$(command -v exiftool)"
 fi
 
 if [ "$#" -lt 2 ] || [ "$#" -gt 3 ] ; then
@@ -62,32 +57,32 @@ shopt -s nullglob # Sets nullglob
 shopt -s nocaseglob # Sets nocaseglob
 
 failed_files=()
-for file in "$srcdir"/*.{jpg,jpeg,png,mov,mp4} ; do
+for file in "${srcdir}"/*.{jpg,jpeg,png,mov,mp4} ; do
     filename=$(basename -- "$file")
     extension="${filename##*.}"
     if [ "$use_random" = true ] ; then
-	suffix=$(randomString 12)
+        suffix=$(random_string 12)
     else
-	suffix="${filename%.*}"
+        suffix="${filename%.*}"
     fi
     
-    date_str=$("$EXIFTOOL" -d '%Y%m%d_%H%M%S' -DateTimeOriginal -s3 "$file")
-    if [ -z "$date_str" ] ; then
-	date_str=$("$EXIFTOOL" -d '%Y%m%d_%H%M%S' -CreateDate -s3 "$file")
+    date_str=$("$EXIFTOOL" -d '%Y%m%d_%H%M%S' -DateTimeOriginal -s3 "${file}")
+    if [ -z "${date_str}" ] ; then
+        date_str=$("$EXIFTOOL" -d '%Y%m%d_%H%M%S' -CreateDate -s3 "${file}")
     fi
     
     if [ -n "$date_str" ] ; then
-	new_name="$destdir"/"$date_str"_"$suffix"."$extension"
+        new_name="$destdir"/"$date_str"_"$suffix"."$extension"
     else
-	new_name="$destdir"/"$filename"
+        new_name="$destdir"/"$filename"
     fi
 
-    cmd="cp -d --preserve=all \"$file\" \"$new_name\""
-    echo "$cmd"
+    cmd="cp -d --preserve=all \"${file}\" \"${new_name}\""
+    echo "${cmd}"
 
-    eval "$cmd"
+    eval "${cmd}"
     if [ $? -ne 0 ]; then
-	failed_files+=("$file\n")
+        failed_files+=("$file\n")
     fi
 done
 
