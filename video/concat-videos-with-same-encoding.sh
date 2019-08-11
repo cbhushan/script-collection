@@ -11,14 +11,8 @@
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 . "$script_dir"/../bash-functions.sh
 
-if program_is_available ffmpeg ; then
-    FFMPEG="$(command -v ffmpeg)"
-
-else
-    echo "Cannot find ffmpeg on current path. It must be installed in order to use $0"
-    echo "exiting.."
-    exit 1
-fi
+assert_program_is_available ffmpeg
+FFMPEG="$(command -v ffmpeg)"
 
 if [ "$#" -lt 2 ] || [ "$#" -gt 3 ] ; then
     echo "Incorrect usage: Illegal number of parameters!"
@@ -78,9 +72,9 @@ else
     exit 1
 fi
 
-cmd="$FFMPEG -f concat -safe 0 -i $list_file -c copy $out_file"
-echo "$cmd"
-eval "$cmd"
+cmd="$FFMPEG -f concat -safe 0 -i \"${list_file}\" -c copy \"${out_file}\""
+echo "${cmd}"
+eval "${cmd}"
 
 if [ -n "$tmp_list" ]; then # set or none-empty
     rm "$tmp_list"
