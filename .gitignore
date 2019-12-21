@@ -30,3 +30,5 @@ __pycache__/
 ehthumbs.db
 Thumbs.db
 
+# pycharm
+.idea
