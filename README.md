@@ -1,12 +1,12 @@
 # Script-collection
-This repository contains (a subset) of scripts that I use frequently and are probably general enough for wider sharing.
+This repository contains (a subset) of scripts that I use frequently.
 Purpose of each folder/script is described below in short. 
 In addition, each script should have more information near the top.
-Most of these scripts are **only** tested on Debian, Ubuntu and Raspbian distribution with GNU coreutils.
+Most of these scripts are tested **only** on Debian and Ubuntu distribution with GNU coreutils.
 
 * [**bash-functions.sh**](./bash-functions.sh): Library of useful bash functions. To be sourced by other bash scripts. This also make use of `bashmenot`.
 
-* [**bashmenot.sh**](./bashmenot): Copy of incredible bash library [bashmenot](https://github.com/mietek/bashmenot),  released under BSD 3-Clause License.
+* [**bashmenot**](./bashmenot): Copy of incredible bash library [bashmenot](https://github.com/mietek/bashmenot),  released under BSD 3-Clause License.
 
 * [**general-linux**](./general-linux): General purpose linux bash scripts. These expects bash version >=4.3.30.
 
