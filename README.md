@@ -1,11 +1,20 @@
 # Script-collection
-This repository contains (a subset) of scripts that I use frequently and are probably general enough for wider use. Purpose of each script is described below in short.
+This repository contains (a subset) of scripts that I use frequently and are probably general enough for wider sharing.
+Purpose of each folder/script is described below in short. 
+In addition, each script should have more information near the top.
+Most of these scripts are **only** tested on Debian, Ubuntu and Raspbian distribution with GNU coreutils.
 
-* [**uniquify-bash-history.sh**](https://github.com/cbhushan/script-collection/blob/master/uniquify-bash-history.sh) - Removes duplicate entries from bash history while preserving their order and retaining the latest dupicate entry. 
+* [**bash-functions.sh**](./bash-functions.sh): Library of useful bash functions. To be sourced by other bash scripts. This also make use of `bashmenot`.
 
-* [**randSleepExec.sh**](https://github.com/cbhushan/script-collection/blob/master/randSleepExec.sh) - Sleeps for a random time before executing the passed commands with arguments.
+* [**bashmenot.sh**](./bashmenot): Copy of incredible bash library [bashmenot](https://github.com/mietek/bashmenot),  released under BSD 3-Clause License.
 
-* [**GIMP-plugins**](https://github.com/cbhushan/script-collection/tree/master/GIMP-plugins) - Set of plugins I developed while playing around with [GIMP](https://www.gimp.org/) to simplify life.
+* [**general-linux**](./general-linux): General purpose linux bash scripts. These expects bash version >=4.3.30.
+
+* [**GIMP-plugins**](./GIMP-plugins): Set of plugins I developed while playing around with [GIMP](https://www.gimp.org/) to simplify life. Tested with Gimp v2.10. 
+
+* [**image**](./image): Scripts for manipulating (camera) image metadata.
+
+* [**video**](./video): Scripts for manipulating videos. These are largely wrappers on top of [FFmpeg](http://ffmpeg.org/) functionality.
 
 
 ## License
