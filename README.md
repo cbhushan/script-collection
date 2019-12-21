@@ -4,13 +4,13 @@ Purpose of each folder/script is described below in short.
 In addition, each script should have more information near the top.
 Most of these scripts are tested **only** on Debian and Ubuntu distribution with GNU coreutils.
 
-* [**bash-functions.sh**](./bash-functions.sh): Library of useful bash functions. To be sourced by other bash scripts. This also make use of `bashmenot`.
+* [**bash-functions.sh**](./bash-functions.sh): Library of useful bash functions. To be sourced by other bash scripts. This also make use of `bashmenot`. It is known to work with bash version >=4.3.30.
 
 * [**bashmenot**](./bashmenot): Copy of incredible bash library [bashmenot](https://github.com/mietek/bashmenot),  released under BSD 3-Clause License.
 
 * [**general-linux**](./general-linux): General purpose linux bash scripts. These expects bash version >=4.3.30.
 
-* [**GIMP-plugins**](./GIMP-plugins): Set of plugins I developed while playing around with [GIMP](https://www.gimp.org/) to simplify life. Tested with Gimp v2.10. 
+* [**GIMP-plugins**](./GIMP-plugins): Set of plugins I developed while playing around with [GIMP](https://www.gimp.org/) to simplify life. Tested with Gimp v2.8 and v2.10.
 
 * [**image**](./image): Scripts for manipulating (camera) image metadata.
 
