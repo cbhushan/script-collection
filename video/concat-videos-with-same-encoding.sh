@@ -57,7 +57,7 @@ esac
 
 
 mkdir -p "$(dirname "${2}")"
-out_file="$(realpath "${2}")"
+out_file="$(readlink -m "${2}")"
 if [ -f "$out_file" ] ; then
     echo "ERROR: Output file already exists: $out_file"
     echo -e "\t Please remove output file to continue with merging! Exiting..."
@@ -85,21 +85,21 @@ if [ -d "$1" ] ; then
     fi 
 
     # create video-list file
-    if [ "$use_demux" = true ] ; then
+    if [ "${use_demux}" = true ] ; then
         tmp_list=$(mktemp)
         for f in "${srcdir}"/*.${EXT}; do
-            echo "file '$f'" >> "$tmp_list"
+            echo "file '${f}'" >> "${tmp_list}"
         done
-        list_file="$tmp_list"
+        list_file="${tmp_list}"
     
     else
-        file_list=$(ls "${srcdir}"/*.${EXT} | xargs printf '%s|')
-        
+        list_file=$(ls "${srcdir}"/*.${EXT} | xargs printf '%s|')
+        list_file="${list_file::-1}"  # remove trailing pipe char
     fi
     
-elif [ -f "$1" ] ; then
-    list_file="$1"
-    if [ "$use_demux" = false ] ; then
+elif [ -f "${1}" ] ; then
+    list_file="${1}"
+    if [ "${use_demux}" = false ] ; then
         echo "Error: video-list.txt can only be used with -demux flag."
         exit 1
     fi
@@ -108,10 +108,14 @@ else
     exit 1
 fi
 
-cmd="$FFMPEG -f concat -safe 0 -i \"${list_file}\" -c copy \"${out_file}\""
+if [ "${use_demux}" = true ] ; then
+    cmd="${FFMPEG} -f concat -safe 0 -i \"${list_file}\" -c copy \"${out_file}\""
+elif [ "${use_demux}" = false ] ; then
+    cmd="${FFMPEG} -i \"concat:${list_file}\" -c copy \"${out_file}\""
+fi
 echo "${cmd}"
 eval "${cmd}"
 
-if [ -n "$tmp_list" ]; then # set or none-empty
-    rm "$tmp_list"
+if [ -n "${tmp_list}" ]; then # set or none-empty
+    rm "${tmp_list}"
 fi
