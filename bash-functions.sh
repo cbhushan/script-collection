@@ -1,7 +1,12 @@
-# Library of commonly used operations. This should be reusable in other bash scripts by sourcing this script:
-#   source bash-functions.sh
+# Library of commonly used operations. 
+# This should be reusable in other bash scripts by sourcing this script:
+#    source bash-functions.sh
 #
 # Note that boolean bash functions return 0 for True! Because bash interprets it as error code.
+#
+# Other similar bash function libs:
+#  - https://github.com/javier-lopez/learn/blob/master/sh/lib
+#  - https://github.com/martinburger/bash-common-helpers
 #
 # Copyright (c) C Bhushan; Licensed under the Apache License v2.0.
 # https://github.com/cbhushan/script-collection
