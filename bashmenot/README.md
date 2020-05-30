@@ -12,11 +12,9 @@ Usage
 $ source bashmenot/src.sh
 ```
 
-### Documentation
-
 - See the [_bashmenot_ reference](https://cbhushan.github.io/bashmenot-website/pages/reference/) for a complete list of available functions and options.
 
-- Read the [_bashmenot_ source code](https://github.com/mietek/bashmenot) to understand how it works.
+- Read the [_bashmenot_ source code](./src) to understand how it works.
 
 
 About
