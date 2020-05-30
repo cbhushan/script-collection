@@ -17,6 +17,17 @@ $ source bashmenot/src.sh
 - Read the [_bashmenot_ source code](./src) to understand how it works.
 
 
+#### Dependencies
+
+_bashmenot_ is written in [GNU _bash_](https://gnu.org/software/bash/), and requires:
+
+- [GNU _date_](https://gnu.org/software/coreutils/manual/html_node/date-invocation.html) — for date formatting
+- [GNU _sort_](https://gnu.org/software/coreutils/manual/html_node/sort-invocation.html) — for sorting
+- [_curl_](http://curl.haxx.se/) — for remote storage
+- [OpenSSL](https://openssl.org/) — for hashing and Amazon S3 storage
+- [_git_](http://git-scm.com/) — for self-updates
+
+
 About
 -----
 
