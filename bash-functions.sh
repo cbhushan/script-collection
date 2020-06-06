@@ -14,8 +14,8 @@
 # bashmenot: Copyright (c) 2014-2015, Mietek Bak; Released under BSD 3-Clause License
 # https://github.com/mietek/bashmenot
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd -P )"
-source "${SCRIPT_DIR}/bashmenot/src.sh"
+SCRIPT_COLLECTION_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd -P )"
+source "${SCRIPT_COLLECTION_DIR}/bashmenot/src.sh"
 
 
 #######################################
