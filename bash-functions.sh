@@ -164,3 +164,35 @@ backup_to_destination () {
     fi
 }
 
+
+#######################################
+# Checks if the host/IP reachable by pinging.
+# Usage: 
+#     backup_to_destination </path/to/file> </path/to/backup/folder> 
+# Returns:
+#     true when host is reachable. Otherwise returns false
+# Example:
+#     host_is_reachable localhost && echo "Reachable!" || echo "Not Reachable!"
+#
+host_is_reachable() {
+    local host
+    expect_args host -- "$@"
+    ping -c 2 "${host}" &> /dev/null
+    return $?
+}
+
+
+#######################################
+# Print connection status of host/IP.
+# Usage: 
+#     backup_to_destination </path/to/file> </path/to/backup/folder> 
+# Returns:
+#     NA
+# Example:
+#     echo "localhost is $(host_status localhost)"
+#
+host_status() {
+    local host
+    expect_args host -- "$@"
+    host_is_reachable "${host}" && echo "Connected" || echo "Not Connected"
+}
