@@ -168,7 +168,7 @@ backup_to_destination () {
 #######################################
 # Checks if the host/IP reachable by pinging.
 # Usage: 
-#     backup_to_destination </path/to/file> </path/to/backup/folder> 
+#     host_is_reachable <hostname>
 # Returns:
 #     true when host is reachable. Otherwise returns false
 # Example:
@@ -185,7 +185,7 @@ host_is_reachable() {
 #######################################
 # Print connection status of host/IP.
 # Usage: 
-#     backup_to_destination </path/to/file> </path/to/backup/folder> 
+#     host_status <hostname>
 # Returns:
 #     NA
 # Example:
@@ -195,4 +195,47 @@ host_status() {
     local host
     expect_args host -- "$@"
     host_is_reachable "${host}" && echo "Connected" || echo "Not Connected"
+}
+
+
+#######################################
+# Check http internet connection via curl. By default, checks connection to http://google.com.
+# Discussion here: https://unix.stackexchange.com/q/190513
+# Usage: 
+#     check_internet_http [<hostname>]
+# Returns:
+#     0 - when hostname is downloadable
+#     1 - when proxy won't let us through
+#     2 - when network is down or very slow
+# Example:
+#     check_internet_http http://charter.guestinternet.com/ && echo "internet working" || "internet not working"
+#
+check_internet_http() {
+    local testhost
+    expect_args testhost -- "$@" "http://google.com"
+    case "$(curl -s --max-time 2 -I "${testhost}" | sed 's/^[^ ]*  *\([0-9]\).*/\1/; 1q')" in
+        [23]) return 0;;  # HTTP connectivity is up
+        5) return 1;; # The web proxy won't let us through
+        *) return 2;; # The network is down or very slow
+    esac
+}
+
+
+#######################################
+# Check internet connection via port scan to google.com
+# Discussion here: https://unix.stackexchange.com/q/190513
+# Usage: 
+#     check_internet_portscan
+# Returns:
+#     true - portscan is successful
+#     false - otherwise
+# Example:
+#     check_internet_portscan && echo "internet working" || "internet not working"
+#
+check_internet_portscan() {
+    if nc -dzw2 "google.com" 443; then
+        true
+    else
+        false
+    fi
 }
