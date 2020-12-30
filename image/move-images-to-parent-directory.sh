@@ -17,7 +17,7 @@ elif [ ! -d "$1" ] ; then
     exit 1
 fi
 
-. "$script_dir"/bash-functions.sh
+. "$script_dir"/../bash-functions.sh
 
 top_dir=$(cd "$1" && pwd)
 
