@@ -10,14 +10,11 @@ https://github.com/cbhushan/script-collection
 """
 
 from __future__ import absolute_import, division, print_function, unicode_literals
-from genericpath import exists
 import os
 import shutil
 import sys
 import math
 from PIL import Image
-from PIL.ExifTags import TAGS, GPSTAGS
-from datetime import datetime, timedelta
 import traceback
 import tempfile
 import copy
@@ -28,6 +25,9 @@ from scipy import signal
 from skimage.filters import threshold_otsu, threshold_multiotsu
 from glob import glob
 import pathlib
+
+from PIL import Image, ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True  # Load pngs saved by GIMP with color profile https://gitlab.gnome.org/GNOME/gimp/-/issues/2111
 
 # sys.path.append(os.path.realpath(__file__))
 # import imghelper
@@ -318,7 +318,6 @@ for fn in file_in_list:
         )
         logging.info(f'Saved {outfn}')
         
-    except Exception as e:
+    except Exception:
         logging.error(f'Encoutered error while processing: {fn}:\n\n {traceback.format_exc()}')
-
 

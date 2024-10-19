@@ -13,6 +13,12 @@
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 # . "$script_dir"/../bash-functions.sh
 
+if [ "$#" -lt 3 ]; then
+    echo "Need atleast three params. Only 3rd param is used. Usage:"
+    echo "$0 <mime> <keep_orig> <filename>"
+    exit 120
+fi
+
 # inputs
 filename="$3"
 keep_original="$2"  # ignored
@@ -21,17 +27,17 @@ keep_original="$2"  # ignored
 LOGFILE=/mnt/data2/tmp/scan-post-process.log
 TEMPDIR="$(mktemp -d)"
 DOCKERARGS="--rm -i --user "$(id -u):$(id -g)" -v ${TEMPDIR}:${TEMPDIR} -v /mnt:/mnt -v /home:/home"
-OCRMYPDF="docker run ${DOCKERARGS} jbarlow83/ocrmypdf"
-IMG2PDF="docker run ${DOCKERARGS} --entrypoint /usr/local/bin/img2pdf jbarlow83/ocrmypdf"
+OCRMYPDF="docker run ${DOCKERARGS} jbarlow83/ocrmypdf -v 1 -O1"
+IMG2PDF="docker run ${DOCKERARGS} --entrypoint /usr/local/bin/img2pdf jbarlow83/ocrmypdf -v"
 
-
-function do_it() {
+# Enable debugging only for function
+function optimize_ocr() {
   ( 
     echo "$(date -u)"
     echo "${TEMPDIR}"
     echo "filename=${filename}"
 
-    set -x  # Enable debugging from here
+    set -x
 
     /home/chitresh/opt/miniconda3/envs/scan_docs/bin/python "${script_dir}/optimize-scanned.py" \
     -i "${filename}" \
@@ -42,8 +48,23 @@ function do_it() {
 
     ${OCRMYPDF} "${TEMPDIR}/merged.pdf" "${filename}.pdf"
 
-    rm -rf ${TEMPDIR}
   )
 }
 
-do_it |& tee "${LOGFILE}"
+
+# take action based on extension
+filename_base="$(basename -- "$filename")"
+
+case "${filename_base##*.}" in
+    pdf)
+        ${OCRMYPDF} "${filename}" "${filename}"  |& tee "${LOGFILE}"
+        ;;
+    png|tiff|jpg|jpeg)
+        optimize_ocr |& tee "${LOGFILE}"
+        ;;
+    *)
+        echo "Unknown file extension; no action."  |& tee "${LOGFILE}"
+        ;;
+esac
+
+rm -rf ${TEMPDIR}
