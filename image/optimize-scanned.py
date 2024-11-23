@@ -14,7 +14,7 @@ import os
 import shutil
 import sys
 import math
-from PIL import Image
+from PIL import Image, ImageFile
 import traceback
 import tempfile
 import copy
@@ -23,11 +23,10 @@ import argparse
 import numpy as np
 from scipy import signal
 from skimage.filters import threshold_otsu, threshold_multiotsu
-from glob import glob
 import pathlib
 
-from PIL import Image, ImageFile
-ImageFile.LOAD_TRUNCATED_IMAGES = True  # Load pngs saved by GIMP with color profile https://gitlab.gnome.org/GNOME/gimp/-/issues/2111
+# Load pngs saved by GIMP with color profile https://gitlab.gnome.org/GNOME/gimp/-/issues/2111
+ImageFile.LOAD_TRUNCATED_IMAGES = True  
 
 # sys.path.append(os.path.realpath(__file__))
 # import imghelper
@@ -278,7 +277,10 @@ parser = argparse.ArgumentParser(
     description='Optimizes scanned documents for archival purposes.',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 requiredNamed = parser.add_argument_group('Required named arguments')
-requiredNamed.add_argument('-i', '--input', help='Path to input file name', required=True)
+requiredNamed.add_argument(
+    '-i', '--input', required=True,
+    help='Path to input file name. It can also be the "save path" as returned by Gnome Simple-Scan.')
+
 requiredNamed.add_argument('-o', '--output-dir', help='Path to output folder/directory', required=True)
 
 parser.add_argument("--out-format", choices=list(output_formats.keys()), 
