@@ -1,21 +1,32 @@
 #!/bin/bash
-#
-# Set this file as the post-processing script in the simple-scan preferences.
-# 
-# For reference, at the time of writing the arguments from simple-scan are:
-# $1    - the mime type, eg application/pdf
-# $2    - whether or not to keep a copy of the original file
-# $3    - the filename. eg: "/mnt/data/Main-shared/scanned/multi-pages.png"
-# $4..N - postprocessing script arguments entered in preferences
-# 
-# https://gist.github.com/marcosrogers/fc0250a52490e92ab8293bd781231a7e
+read -r -d '' USAGE << EOM
+This script can be used as post-processing script for Gnome Simple-Scan 
+when scanning text-heavy documents.
+
+For reference, at the time of writing the arguments from simple-scan are:
+  arg #1 - the mime type, eg application/pdf
+  arg #2 - whether or not to keep a copy of the original file
+  arg #3 - the filename. eg: "/path/to/scanned/multi-pages.png"
+  arg #4 .. N - postprocessing script arguments entered in preferences
+
+Hence, this script needs atleast three arguments. 
+Although, only 3rd argument is used by this script.
+
+Usage:
+   ${0} <mime> <keep_orig> <filename>
+
+Inspired by: https://gist.github.com/marcosrogers/fc0250a52490e92ab8293bd781231a7e
+
+Copyright C Bhushan; Licensed under the Apache License v2.0.
+https://github.com/cbhushan/script-collection
+
+EOM
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 # . "$script_dir"/../bash-functions.sh
 
 if [ "$#" -lt 3 ]; then
-    echo "Need atleast three params. Only 3rd param is used. Usage:"
-    echo "$0 <mime> <keep_orig> <filename>"
+    echo "${USAGE}"
     exit 120
 fi
 
@@ -32,9 +43,9 @@ IMG2PDF="docker run ${DOCKERARGS} --entrypoint /usr/local/bin/img2pdf jbarlow83/
 
 # Enable debugging only for function
 function optimize_ocr() {
-  ( 
+  (
     echo "$(date -u)"
-    echo "${TEMPDIR}"
+    echo "TEMPDIR=${TEMPDIR}"
     echo "filename=${filename}"
 
     set -x
@@ -57,7 +68,7 @@ filename_base="$(basename -- "$filename")"
 
 case "${filename_base##*.}" in
     pdf)
-        ${OCRMYPDF} "${filename}" "${filename}"  |& tee "${LOGFILE}"
+        ${OCRMYPDF} --force-ocr "${filename}" "${filename}"  |& tee "${LOGFILE}"
         ;;
     png|tiff|jpg|jpeg)
         optimize_ocr |& tee "${LOGFILE}"
