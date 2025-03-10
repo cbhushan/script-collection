@@ -37,9 +37,10 @@ keep_original="$2"  # ignored
 # consts
 LOGFILE=/mnt/data2/tmp/scan-post-process.log
 TEMPDIR="$(mktemp -d)"
+DOCKERIMAGE="jbarlow83/ocrmypdf:v16.10.0"
 DOCKERARGS="--rm -i --user "$(id -u):$(id -g)" -v ${TEMPDIR}:${TEMPDIR} -v /mnt:/mnt -v /home:/home"
-OCRMYPDF="docker run ${DOCKERARGS} jbarlow83/ocrmypdf -v 1 -O1"
-IMG2PDF="docker run ${DOCKERARGS} --entrypoint /usr/local/bin/img2pdf jbarlow83/ocrmypdf -v"
+OCRMYPDF="docker run ${DOCKERARGS} ${DOCKERIMAGE} -v 1 -O1"
+IMG2PDF="docker run ${DOCKERARGS} --entrypoint img2pdf ${DOCKERIMAGE} -v"
 
 # Enable debugging only for function
 function optimize_ocr() {
@@ -50,7 +51,7 @@ function optimize_ocr() {
 
     set -x
 
-    /home/chitresh/opt/miniconda3/envs/scan_docs/bin/python "${script_dir}/optimize-scanned.py" \
+    /home/chitresh/opt/miniforge3/envs/scan_docs/bin/python "${script_dir}/optimize-scanned.py" \
     -i "${filename}" \
     -o "${TEMPDIR}" \
     --out-format tiff

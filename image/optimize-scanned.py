@@ -51,7 +51,13 @@ output_formats = {
 
 def image_arr(image):
     """
-    Returns numpy array from PIL.Image
+    Returns numpy array from input.
+    Input can be PIL.Image or np.ndarray.
+
+    Returns:
+        I: np.ndarray of the input
+        input_is_image: True when input is PIL.Image.Image. 
+                        False otherwise.
     """
     if isinstance(image, Image.Image):
         I = np.asarray(image)
@@ -69,7 +75,7 @@ def image_arr(image):
 
 def pil_image(arr, ref_image):
     """
-    Returns PIL.Image object created from input numpy array
+    Returns PIL.Image object created from input numpy array.
     """
     if isinstance(arr, Image.Image):
         return arr
@@ -195,7 +201,7 @@ def crop(image, size_inch):
 def input_file_list(arg_in):
     """
     Returns list of pathlib file-names to operate on. 
-    arg_in can be the "save path" as returned by Gnome Simple Docment scanner.
+    arg_in can be the "save path" as returned by Gnome Simple Document scanner.
     """
     # find all files saved by Simple Docment scanner
     arg_in = pathlib.Path(arg_in)
