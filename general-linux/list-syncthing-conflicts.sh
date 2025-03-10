@@ -20,15 +20,17 @@ assert_program_is_available grep
 assert_program_is_available column
 
 expect_args CONFIGXML -- "$@" "${HOME}/.config/syncthing/config.xml"
+[ -f "${CONFIGXML}" ] || CONFIGXML="${HOME}/.local/state/syncthing/config.xml"
+expect_existing "${CONFIGXML}" || die "config.xml not found"
+log "Using config: ${CONFIGXML}"
 
 getconflicts() {
     local TOP_FOLDER
     expect_args TOP_FOLDER -- "$@"
     expect_existing "${TOP_FOLDER}"
 
-    find "${TOP_FOLDER}" -name '*sync-conflict*' -print0 | sort -z
+    find "${TOP_FOLDER}" -type d -name .stversions -prune -o -name '*sync-conflict*' -print0 | sort -z
 }
-
 
 syncthing_folders="$(grep -Po '(?<=path\=\")[^"]*' "${CONFIGXML}" | sort)"
 
