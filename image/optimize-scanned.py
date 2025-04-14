@@ -207,14 +207,20 @@ def input_file_list(arg_in):
     arg_in = pathlib.Path(arg_in)
     src_dir = arg_in.parent
 
-    if arg_in.suffix not in ('.png', '.tiff', '.jpg', '.jpeg'):
+    if arg_in.is_dir():  # input is directory - process all valid files in this top level directory; NOT recursive
+        file_in = []
+        for ext in ('.png', '.tiff', '.jpg', '.jpeg'):
+            file_in = file_in + sorted(arg_in.glob('*' + ext))
+
+    # input should be file
+    elif arg_in.suffix not in ('.png', '.tiff', '.jpg', '.jpeg'):
         logging.warning(f'Unsupported file extension: {arg_in.suffix}. Inputs will NOT be processed.')
         file_in = []
 
-    if os.path.exists(arg_in):  # single file
+    elif os.path.exists(arg_in):  # single file
         file_in = [arg_in]
 
-    else:  # May be multiple files
+    else:  # May be multiple files (as saved by Gnome Simple Document scanner)
         f_pattern = arg_in.stem + '-*' + arg_in.suffix  # file_in-*.ext
         file_in = sorted(src_dir.glob(f_pattern))  # file_in-*.ext
 
@@ -222,13 +228,19 @@ def input_file_list(arg_in):
 
 
 def process_file(fn, out_top, n_colors=2, crop_size=None, median_kernel_size=None, contrast_adjust='auto', 
-                 set_dpi=None, keep_original=False, out_format='png'):
+                 set_dpi=None, keep_original=False, out_format='png', overwrite_fn_okay=False):
     """
     Process one file.
     ToDo: 
      - add Blurring if required
      - gray-scale dithering
     """
+    out_file = out_top / f'{fn.stem}.{out_format}'
+    if (out_file == fn) and not overwrite_fn_okay:
+        msg = (f'[ERR] Input file and output file are same!\nInput: {fn}\nOutput: {out_file}.\n'
+               f'\nEither change output directory or set overwrite_fn_okay to True')
+        raise ValueError(msg)
+
     if keep_original == "true":
         orig_file = out_top /  f'orig_{fn.name}'
         shutil.copy2(fn, orig_file)
@@ -274,6 +286,8 @@ def process_file(fn, out_top, n_colors=2, crop_size=None, median_kernel_size=Non
         out_img.save(out_file, **save_kwargs)
     else:
         out_img.save(out_file, dpi=dpi_out, **save_kwargs)
+    
+    print(f'[INFO] Saved: {out_file}')
     return out_file
 
 
@@ -285,7 +299,7 @@ parser = argparse.ArgumentParser(
 requiredNamed = parser.add_argument_group('Required named arguments')
 requiredNamed.add_argument(
     '-i', '--input', required=True,
-    help='Path to input file name. It can also be the "save path" as returned by Gnome Simple-Scan.')
+    help='Path to input filename (or directory). It can also be the "save path" as returned by Gnome Simple-Scan.')
 
 requiredNamed.add_argument('-o', '--output-dir', help='Path to output folder/directory', required=True)
 
