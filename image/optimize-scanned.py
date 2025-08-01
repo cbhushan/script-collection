@@ -28,16 +28,10 @@ import pathlib
 # Load pngs saved by GIMP with color profile https://gitlab.gnome.org/GNOME/gimp/-/issues/2111
 ImageFile.LOAD_TRUNCATED_IMAGES = True  
 
-# sys.path.append(os.path.realpath(__file__))
+sys.path.append(os.path.realpath(__file__))
 # import imghelper
+from imghelper import image_arr, pil_image, rescale_to_8bit, crop, window_intensity, paper_size_inch
 
-
-paper_size_inch = {  # (x-inch, y-inch)
-    'A4': (8.3, 11.7),
-    'Half-A4': (8.3, 5.85),
-    'Letter': (8.5, 11.0),
-    'Half-Letter': (8.5, 5.5),
-}
 
 contrast_enhance_qunatiles = {
     'minmax': (0, 1),
@@ -49,55 +43,6 @@ output_formats = {
     'tiff': {"compression": "group4"},
 }
 
-def image_arr(image):
-    """
-    Returns numpy array from input.
-    Input can be PIL.Image or np.ndarray.
-
-    Returns:
-        I: np.ndarray of the input
-        input_is_image: True when input is PIL.Image.Image. 
-                        False otherwise.
-    """
-    if isinstance(image, Image.Image):
-        I = np.asarray(image)
-        input_is_image = True
-
-    elif isinstance(image, np.ndarray):
-        I = image.copy()
-        input_is_image = False
-
-    else:
-        raise ValueError('Unknown format')
-    
-    return I, input_is_image
-
-
-def pil_image(arr, ref_image):
-    """
-    Returns PIL.Image object created from input numpy array.
-    """
-    if isinstance(arr, Image.Image):
-        return arr
-    
-    elif isinstance(arr, np.ndarray):
-        image = Image.fromarray(arr)
-
-    else:
-        raise ValueError('Unknown format')
-    
-    # copy some sort of header from ref_image
-    #  image = image.copy_stuff(ref_image)
-    return image
-
-
-def rescale_to_8bit(arr):
-    """Rescale min-max to 8-bit range [0, 255]"""
-    arr = np.asarray(arr)
-    i_min, i_max = arr.min(), arr.max()
-    out_img = 255 * (arr - i_min) / (i_max - i_min)
-    out_img = np.uint8(out_img)
-    return out_img
 
 
 def otsu(image, n_class=2, nbins=256):
@@ -140,64 +85,6 @@ def median_filter(image, kernel_size=3):
         return out_img
 
 
-def stretch_intensity(image, quantile=[0.006, 0.994]):
-    I, input_is_image = image_arr(image)
-    assert I.ndim == 2, 'input image must be single channel (grayscale image)'
-
-    if isinstance(quantile, str) and quantile == 'min-max':
-        i_min, i_max = I.min(), I.max()
-    
-    elif isinstance(quantile, (list, tuple, np.array)) and len(quantile) == 2:
-        i_min, i_max = np.quantile(I, quantile)
-
-    else:
-        raise ValueError(f'Unsupported quantile input = {quantile}')
-
-    # scale
-    out_img = (I - i_min) / (i_max - i_min)
-    out_img[out_img < 0] = 0
-    out_img[out_img > 1] = 1
-
-    if input_is_image:
-        out_img = rescale_to_8bit(out_img)
-        return pil_image(out_img, image)
-    else:
-        return out_img
-
-
-def crop(image, size_inch):
-    """Crops image as per desired paper size"""
-    if not isinstance(image, Image.Image):
-        logging.warning('Input is not PIL.Image. Will skip crop()')
-        return image
-    
-    if 'dpi' not in image.info:
-        logging.warning('Can not find DPI of input. Will skip crop()')
-        return image
-    
-    if size_inch in paper_size_inch:
-        xinch, yinch = paper_size_inch[size_inch]
-    else:
-        logging.warning(f'Unknown size_inch input: {size_inch}. Will skip crop()')
-        return image
-
-    try:
-        xres, yres = image.info['dpi']
-
-        o_size = int(math.ceil(xres * xinch)), int(math.ceil(yres * yinch))
-        o_size = np.minimum(o_size, image.size)
-
-        I = np.asarray(image)
-        I_crp = I[:o_size[1], :o_size[0]]  # b/c numpy & PIL indexing are in opposite order!
-        img_crp = pil_image(I_crp, image)
-        
-    except Exception as e:
-        logging.error(f'Encoutered error while cropping. Will skip crop():\n\n {traceback.format_exc()}')
-        img_crp = image
-
-    return img_crp
-
-
 def input_file_list(arg_in):
     """
     Returns list of pathlib file-names to operate on. 
@@ -223,6 +110,10 @@ def input_file_list(arg_in):
     else:  # May be multiple files (as saved by Gnome Simple Document scanner)
         f_pattern = arg_in.stem + '-*' + arg_in.suffix  # file_in-*.ext
         file_in = sorted(src_dir.glob(f_pattern))  # file_in-*.ext
+
+    if len(file_in) == 0:
+        logging.warning(f'No files found to process in {arg_in}.')
+        return []
 
     return file_in
 
@@ -254,7 +145,7 @@ def process_file(fn, out_top, n_colors=2, crop_size=None, median_kernel_size=Non
 
     I, _ = image_arr(img)
 
-    oimg = stretch_intensity(I, contrast_enhance_qunatiles[contrast_adjust])
+    oimg = window_intensity(I, contrast_enhance_qunatiles[contrast_adjust])
 
     if median_kernel_size is not None:
         oimg = median_filter(oimg, kernel_size=median_kernel_size)    
