@@ -26,7 +26,7 @@ from skimage.filters import threshold_otsu, threshold_multiotsu
 import pathlib
 
 # Load pngs saved by GIMP with color profile https://gitlab.gnome.org/GNOME/gimp/-/issues/2111
-ImageFile.LOAD_TRUNCATED_IMAGES = True  
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 sys.path.append(os.path.realpath(__file__))
 # import imghelper
@@ -38,6 +38,7 @@ contrast_enhance_qunatiles = {
     'auto': (0.006, 0.994),  # used to be gimp's default
 }
 
+# dict of output-format:saving kwargs; as they are format dependent
 output_formats = {
     'png': {"optimize": True},
     'tiff': {"compression": "group4"},
@@ -55,7 +56,7 @@ def otsu(image, n_class=2, nbins=256):
     if n_class == 2:
         thresh = threshold_otsu(I, nbins=nbins)
         out_img = np.uint8(I > thresh)
-    
+
     elif n_class > 2:
         thresholds = threshold_multiotsu(I, classes=n_class, nbins=nbins)
         out_img = np.digitize(I, bins=thresholds)  # generate multiple regions.
@@ -87,7 +88,7 @@ def median_filter(image, kernel_size=3):
 
 def input_file_list(arg_in):
     """
-    Returns list of pathlib file-names to operate on. 
+    Returns list of pathlib file-names to operate on.
     arg_in can be the "save path" as returned by Gnome Simple Document scanner.
     """
     # find all files saved by Simple Docment scanner
@@ -118,11 +119,12 @@ def input_file_list(arg_in):
     return file_in
 
 
-def process_file(fn, out_top, n_colors=2, crop_size=None, median_kernel_size=None, contrast_adjust='auto', 
-                 set_dpi=None, keep_original=False, out_format='png', overwrite_fn_okay=False):
+def process_file(
+        fn, out_top, n_colors=2, crop_size=None, median_kernel_size=None, contrast_adjust='auto',
+        set_dpi=None, keep_original=False, out_format='png', overwrite_fn_okay=False):
     """
     Process one file.
-    ToDo: 
+    ToDo:
      - add Blurring if required
      - gray-scale dithering
     """
@@ -148,7 +150,7 @@ def process_file(fn, out_top, n_colors=2, crop_size=None, median_kernel_size=Non
     oimg = window_intensity(I, contrast_enhance_qunatiles[contrast_adjust])
 
     if median_kernel_size is not None:
-        oimg = median_filter(oimg, kernel_size=median_kernel_size)    
+        oimg = median_filter(oimg, kernel_size=median_kernel_size)
 
     oimg = otsu(oimg, n_class=n_colors)
 
@@ -177,7 +179,7 @@ def process_file(fn, out_top, n_colors=2, crop_size=None, median_kernel_size=Non
         out_img.save(out_file, **save_kwargs)
     else:
         out_img.save(out_file, dpi=dpi_out, **save_kwargs)
-    
+
     print(f'[INFO] Saved: {out_file}')
     return out_file
 
@@ -190,20 +192,33 @@ parser = argparse.ArgumentParser(
 requiredNamed = parser.add_argument_group('Required named arguments')
 requiredNamed.add_argument(
     '-i', '--input', required=True,
-    help='Path to input filename (or directory). It can also be the "save path" as returned by Gnome Simple-Scan.')
+    help='Path to input filename (or directory). It can also be the "save path" as returned by Gnome Simple-Scan. ' \
+    'When directory, it process all valid files (png, jpeg, jpg, tiff) in this top level directory; NOT recursive.')
 
-requiredNamed.add_argument('-o', '--output-dir', help='Path to output folder/directory', required=True)
+requiredNamed.add_argument(
+    '-o', '--output-dir',
+    help='Path to output folder/directory', required=True)
 
-parser.add_argument("--out-format", choices=list(output_formats.keys()), 
-                    help="Set output image format.", default='tiff')
-parser.add_argument("--num-colors", type=int, help="number of colors in final image", default=2)
-parser.add_argument("--crop-size", help="When set crops the input image to specified size.",
-                    choices=list(paper_size_inch.keys()))
-parser.add_argument("--contrast-adjust", help="Stretch intensity to adjust contrast",
-                    choices=list(contrast_enhance_qunatiles.keys()), default='auto')
-parser.add_argument("--median-kernel-size", help="Set kernel size for median filtering. When not specified, no median filtering is done.", 
-                    type=int, default=None)
-parser.add_argument("--set-dpi", help="Set DPI in image meta data.", type=float, default=None)
+parser.add_argument(
+    "--out-format", choices=list(output_formats.keys()),
+    help="Set output image format.", default='tiff')
+parser.add_argument(
+    "--num-colors", type=int,
+    help="number of colors in final image", default=2)
+parser.add_argument(
+    "--crop-size",
+    help="When set crops the input image to specified size.",
+    choices=list(paper_size_inch.keys()))
+parser.add_argument(
+    "--contrast-adjust",
+    help="Stretch intensity to adjust contrast",
+    choices=list(contrast_enhance_qunatiles.keys()), default='auto')
+parser.add_argument(
+    "--median-kernel-size", type=int, default=None,
+    help="Set kernel size for median filtering. When not specified, no median filtering is done.")
+parser.add_argument(
+    "--set-dpi", type=float, default=None,
+    help="Set DPI in image meta data.")
 
 
 if len(sys.argv) == 1:
@@ -221,8 +236,8 @@ os.makedirs(out_top, exist_ok=True)
 for fn in file_in_list:
     try:
         outfn = process_file(
-            fn, out_top, 
-            n_colors=args.num_colors, 
+            fn, out_top,
+            n_colors=args.num_colors,
             crop_size=args.crop_size,
             contrast_adjust=args.contrast_adjust,
             median_kernel_size=args.median_kernel_size,
@@ -230,7 +245,7 @@ for fn in file_in_list:
             out_format=args.out_format
         )
         logging.info(f'Saved {outfn}')
-        
+
     except Exception:
         logging.error(f'Encoutered error while processing: {fn}:\n\n {traceback.format_exc()}')
 
