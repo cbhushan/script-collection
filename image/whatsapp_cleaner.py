@@ -5,7 +5,8 @@ CLIP and OCR models. This can be used as WhatsApp cleaner!
 WhatsApp cleaner: I was motivated to try this in order to cleanup my
 WhatsApp media folder that has >20K photos and taking up substantial space
 on my phone. A large portion of these photos are memes and other commonly
-forwarded images. This approach assumes that whatsapp photos can be accessed
+forwarded images. This prioritizes low false +ve rates, over false -ves.
+This approach assumes that whatsapp photos can be accessed
 on laptop/desktop where this script will run and users know how to delete
 identified files on phone (easiest - a bi-direction sync setup between phone
 and the laptop/desktop; something like syncthing).
@@ -52,6 +53,57 @@ import easyocr
 import pickle
 import argparse
 
+
+def rm_target_using_ref(ref_root, target_root):
+    """
+    Delete files from target_root if the corresponding files are present
+    in ref_root.
+    - travers files recursively on ref_root
+    - computes its relative path wrt ref_root
+    - if corresponding relative path wrt target_root exists, it is deleted.
+    - folders are skipped and not deleted.
+    """
+    count = 0
+    for root, dirs, files in os.walk(ref_root):
+        for file in files:
+            # Get the full path of the file in ref_root
+            ref_file_path = os.path.join(root, file)
+
+            # Get relative path from ref_root
+            rel_path = os.path.relpath(ref_file_path, ref_root)
+
+            # Construct corresponding path in target_root
+            target_file_path = os.path.join(target_root, rel_path)
+
+            # Delete if it exists
+            if os.path.exists(target_file_path) and os.path.isfile(target_file_path):
+                os.remove(target_file_path)
+                os.remove(ref_file_path)
+                count+= 1
+    return count
+
+
+def delete_empty_dir_recursively(root_path):
+    """
+    Recursively looks for empty directories and deletes them.
+    If a directories becomes empty b/c of such deletion it should also be deleted.
+    """
+    # Walk from bottom-up to process child directories first
+    for root, dirs, files in os.walk(root_path, topdown=False):
+        # Only process subdirectories
+        for dir_name in dirs:
+            dir_path = os.path.join(root, dir_name)
+            try:
+                # Check if directory is empty and delete it
+                if not os.listdir(dir_path):
+                    os.rmdir(dir_path)
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except Exception as e:
+                print(f"Error deleting {dir_path}:")
+                traceback.print_exc()
+
+
 #
 parser = argparse.ArgumentParser(
     description="WhatsApp-type meme classifier with CLIP + OCR"
@@ -67,6 +119,12 @@ parser.add_argument(
     "review_dir",
     type=str,
     help="Directory where symlinks and reports will be created."
+)
+
+parser.add_argument(
+    "--proceed-to-delete",
+    action="store_true",
+    help="If set, deletes files from SOURCE_DIR that match meme candidates in REVIEW_DIR"
 )
 
 # ====== CONFIG ======
@@ -101,6 +159,17 @@ SOURCE_DIR = os.path.abspath(args.source_dir)
 REVIEW_DIR = os.path.abspath(args.review_dir)
 os.makedirs(REVIEW_DIR, exist_ok=True)
 
+
+# Delete files if --proceed-to-delete flag is set
+if args.proceed_to_delete:
+    print(f"Assuming that {REVIEW_DIR=} is revied and verified.")
+    print(f"Proceeding to delete meme files from {SOURCE_DIR=}")
+    n_files = rm_target_using_ref(REVIEW_DIR, SOURCE_DIR)
+    print(f"Deleted {n_files} matching files")
+    delete_empty_dir_recursively(REVIEW_DIR)
+    exit(0)
+
+
 report_path = os.path.join(REVIEW_DIR, "meme_candidates.txt")  # path to files classifed as memes
 csv_path = os.path.join(REVIEW_DIR, "classification_report.csv")  # csv with scores etc.
 html_path = os.path.join(REVIEW_DIR, "classification_dashbaord.html")
@@ -108,14 +177,15 @@ html_path = os.path.join(REVIEW_DIR, "classification_dashbaord.html")
 # file with text-fraction calculation; can be cached to fine-tune text prompts
 ocr_result_file = os.path.join(REVIEW_DIR, "ocr_text_fraction.pklz")
 
-# ---- Clean old symlinks from REVIEW_DIR ----
-for entry in os.listdir(REVIEW_DIR):
-    full_path = os.path.join(REVIEW_DIR, entry)
+# ---- Clean old symlinks from REVIEW_DIR recursively ----
+for root, dirs, files in os.walk(REVIEW_DIR):
+    for entry in files + dirs:
+        full_path = os.path.join(root, entry)
 
-    # Remove only symbolic links
-    if os.path.islink(full_path):
-        os.unlink(full_path)
-
+        # Remove only symbolic links
+        if os.path.islink(full_path):
+            os.unlink(full_path)
+delete_empty_dir_recursively(REVIEW_DIR)
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -418,15 +488,13 @@ def process_batch(batch_paths, txt_frac):
         ])
 
         if decision == "meme_candidate":
-            filename = os.path.basename(path)
-            symlink_path = os.path.join(REVIEW_DIR, filename)
+            # Get relative path from SOURCE_DIR
+            rel_path = os.path.relpath(path, SOURCE_DIR)
+            symlink_path = os.path.join(REVIEW_DIR, rel_path)
 
-            counter = 1
-            base, ext = os.path.splitext(filename)
-            while os.path.exists(symlink_path):
-                filename = f"{base}_{counter}{ext}"
-                symlink_path = os.path.join(REVIEW_DIR, filename)
-                counter += 1
+            # Create parent directories if needed
+            symlink_dir = os.path.dirname(symlink_path)
+            os.makedirs(symlink_dir, exist_ok=True)
 
             os.symlink(path, symlink_path)
             report_file.write(path + "\n")
@@ -457,3 +525,4 @@ print(f'{dynamic_threshold=}')
 generate_html_dashboard(csv_path, html_path)
 print("Done. Review images in:", REVIEW_DIR)
 print("For bulk delete:   xargs -a meme_candidates.txt rm")
+print("Or review files:   xargs -a meme_candidates.txt rm")
