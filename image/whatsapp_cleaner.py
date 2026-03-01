@@ -129,7 +129,7 @@ parser.add_argument(
 
 # ====== CONFIG ======
 BATCH_SIZE = 32    # depends on GPU VRAM
-THRESHOLD = 0.05   # margin b/w meme- & photo-similarity; Use conservative thresholds
+THRESHOLD = 0.04   # margin b/w meme- & photo-similarity; Use conservative thresholds
 MIN_TEXT_RATIO = 0.13  # OCR area ratio threshold for text
 
 # CLIP prompts for two classes; max of prediction-score across any of the prompt-in-class is used.
@@ -195,7 +195,7 @@ reader = easyocr.Reader(["en"], gpu=torch.cuda.is_available())
 # ------------------ Utilities ------------------
 def preprocess_image(img_path):
     img = Image.open(img_path).convert("RGB")
-    img = img.resize((224, 224))
+    img = img.resize((224, 224), Image.LANCZOS)
     # Auto-contrast
     enhancer = ImageEnhance.Contrast(img)
     img = enhancer.enhance(1.2)
@@ -231,12 +231,60 @@ def get_ocr_results(img_paths, cache_file):
 
     for path in tqdm(img_paths):
         if path not in txt_frac:
-            img = preprocess_image(path)
+            img = Image.open(path).convert("RGB")
+
+            # downscale huge images for faster OCR
+            max_dim = max(img.size)
+            if max_dim > 1200:
+                scale = 1200 / max_dim
+                new_size = (int(img.size[0] * scale), int(img.size[1] * scale))
+                img = img.resize(new_size, Image.LANCZOS)
             txt_frac[path] = text_area_ratio(img)
 
     with open(cache_file, 'wb') as file:
         pickle.dump(txt_frac, file)
     return txt_frac
+
+def is_duplicate(img_path, hash_dict):
+    try:
+        img = Image.open(img_path).convert("RGB")
+        ph = imagehash.phash(img)
+        if ph in hash_dict:
+            return True
+        hash_dict[ph] = img_path
+        return False
+
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except:
+        return False
+
+# get all image files
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif"}
+all_images = []
+for root, dirs, files in os.walk(SOURCE_DIR):
+    for file in files:
+        ext = os.path.splitext(file)[1].lower()
+        if ext in IMAGE_EXTENSIONS:
+            full_path = os.path.join(root, file)
+            all_images.append(full_path)
+
+print(f"Found total image files: {len(all_images)}")
+
+# # Duplicate detection
+# print("Scanning for duplicates...")
+# hash_dict = {}
+
+# unique_images = []
+# for img_path in tqdm(all_images):
+#     if not is_duplicate(img_path, hash_dict):
+#         unique_images.append(img_path)
+
+unique_images = all_images
+print(f"Unique images: {len(unique_images)}")
+
+print("ocr computing / caching...")
+txt_frac = get_ocr_results(unique_images, ocr_result_file)
 
 
 def generate_html_dashboard(csv_file, out_html):
@@ -350,13 +398,14 @@ document.querySelectorAll("th").forEach((header, index) => {
 # Use the explicit quickgelu variant name
 model_name = 'ViT-B-32-quickgelu'
 model, _, preprocess = open_clip.create_model_and_transforms(
-    model_name, pretrained='openai'
+    model_name,
+    pretrained='openai',
+    image_resize_mode='longest',  # 'shortest' is default; 'squash' is another option
 )
 
 model = model.to(device)
 model.eval()
 tokenizer = open_clip.get_tokenizer(model_name)
-
 
 # CLIP needs a flat list of prompts
 flat_labels = []
@@ -375,44 +424,6 @@ text_tokens = tokenizer(flat_labels).to(device)
 with torch.no_grad():
     text_features = model.encode_text(text_tokens)
     text_features /= text_features.norm(dim=-1, keepdim=True)
-
-def is_duplicate(img_path, hash_dict):
-    try:
-        img = Image.open(img_path).convert("RGB")
-        ph = imagehash.phash(img)
-        if ph in hash_dict:
-            return True
-        hash_dict[ph] = img_path
-        return False
-
-    except (KeyboardInterrupt, SystemExit):
-        raise
-    except:
-        return False
-
-# get all image files
-IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif"}
-all_images = []
-for root, dirs, files in os.walk(SOURCE_DIR):
-    for file in files:
-        ext = os.path.splitext(file)[1].lower()
-        if ext in IMAGE_EXTENSIONS:
-            full_path = os.path.join(root, file)
-            all_images.append(full_path)
-
-print(f"Found total image files: {len(all_images)}")
-
-# # Duplicate detection
-# print("Scanning for duplicates...")
-# hash_dict = {}
-
-# unique_images = []
-# for img_path in tqdm(all_images):
-#     if not is_duplicate(img_path, hash_dict):
-#         unique_images.append(img_path)
-
-unique_images = all_images
-print(f"Unique images: {len(unique_images)}")
 
 # for logging
 report_file = open(report_path, "w")
@@ -434,7 +445,8 @@ def process_batch(batch_paths, txt_frac):
 
     for path in batch_paths:
         try:
-            img = preprocess_image(path)
+            # img = preprocess_image(path)
+            img = Image.open(path).convert("RGB")
             images.append(preprocess(img))
             valid_paths.append(path)
         except (KeyboardInterrupt, SystemExit):
@@ -502,8 +514,6 @@ def process_batch(batch_paths, txt_frac):
     return margin_list
 
 
-print("ocr computing / caching...")
-txt_frac = get_ocr_results(unique_images, ocr_result_file)
 
 print("Classifying images...")
 margin_all = []
@@ -525,4 +535,4 @@ print(f'{dynamic_threshold=}')
 generate_html_dashboard(csv_path, html_path)
 print("Done. Review images in:", REVIEW_DIR)
 print("For bulk delete:   xargs -a meme_candidates.txt rm")
-print("Or review files:   xargs -a meme_candidates.txt rm")
+print("Or after reviewing files run again with --proceed-to-delete")
