@@ -83,6 +83,50 @@ def rm_target_using_ref(ref_root, target_root):
     return count
 
 
+def move_from_target_using_ref(ref_root, target_root, destination_root):
+    """
+    Moves files from target_root if the corresponding files are present
+    in ref_root. File are moved to destination_root & follow same relative
+    directory structure.
+    - travers files recursively on ref_root
+    - computes its relative path wrt ref_root
+    - if corresponding relative path wrt target_root exists, it is moved.
+    - folders are skipped and not deleted.
+    """
+    os.makedirs(destination_root, exist_ok=True)
+    count = 0
+    for root, dirs, files in os.walk(ref_root):
+        for file in files:
+            # Get the full path of the file in ref_root
+            ref_file_path = os.path.join(root, file)
+
+            # Get relative path from ref_root
+            rel_path = os.path.relpath(ref_file_path, ref_root)
+
+            # Construct corresponding path in target_root
+            target_file_path = os.path.join(target_root, rel_path)
+
+            # move if it exists
+            if os.path.exists(target_file_path) and os.path.isfile(target_file_path):
+                dest_file = os.path.join(destination_root, rel_path)
+
+                # Handle existing files by adding counter
+                if os.path.exists(dest_file):
+                    base, ext = os.path.splitext(dest_file)
+                    counter = 2
+                    while os.path.exists(f"{base}_{counter}{ext}"):
+                        counter += 1
+                    dest_file = f"{base}_{counter}{ext}"
+
+                # Create destination directory if needed
+                os.makedirs(os.path.dirname(dest_file), exist_ok=True)
+
+                shutil.move(target_file_path, dest_file)
+                os.remove(ref_file_path)
+                count+= 1
+    return count
+
+
 def delete_empty_dir_recursively(root_path):
     """
     Recursively looks for empty directories and deletes them.
@@ -127,6 +171,13 @@ parser.add_argument(
     help="If set, deletes files from SOURCE_DIR that match meme candidates in REVIEW_DIR"
 )
 
+parser.add_argument(
+    "--proceed-to-move",
+    type=str,
+    metavar="DESTINATION_DIR",
+    help="If set, moves files from SOURCE_DIR that match meme candidates in REVIEW_DIR to DESTINATION_DIR"
+)
+
 # ====== CONFIG ======
 BATCH_SIZE = 32    # depends on GPU VRAM
 THRESHOLD = 0.04   # margin b/w meme- & photo-similarity; Use conservative thresholds
@@ -162,10 +213,43 @@ os.makedirs(REVIEW_DIR, exist_ok=True)
 
 # Delete files if --proceed-to-delete flag is set
 if args.proceed_to_delete:
-    print(f"Assuming that {REVIEW_DIR=} is revied and verified.")
-    print(f"Proceeding to delete meme files from {SOURCE_DIR=}")
+    print(f"\n{'='*60}")
+    print(f"WARNING: This will permanently delete meme files!")
+    print(f"{'='*60}")
+    print(f"Review directory: {REVIEW_DIR}")
+    print(f"Source directory: {SOURCE_DIR}")
+    print(f"{'='*60}\n")
+
+    confirmation = input("Are you sure you want to DELETE these files? (yes/no): ").strip().lower()
+    if confirmation != "yes":
+        print("Operation cancelled.")
+        exit(0)
+
+    print(f"\nProceeding to delete meme files from {SOURCE_DIR}")
     n_files = rm_target_using_ref(REVIEW_DIR, SOURCE_DIR)
     print(f"Deleted {n_files} matching files")
+    delete_empty_dir_recursively(REVIEW_DIR)
+    exit(0)
+
+# Move files if --proceed-to-move flag is set
+if args.proceed_to_move:
+    dest_dir = os.path.abspath(args.proceed_to_move)
+    print(f"\n{'='*60}")
+    print(f"WARNING: This will move meme files!")
+    print(f"{'='*60}")
+    print(f"Review directory:   {REVIEW_DIR}")
+    print(f"Source directory:   {SOURCE_DIR}")
+    print(f"Destination:        {dest_dir}")
+    print(f"{'='*60}\n")
+
+    confirmation = input("Are you sure you want to MOVE these files? (yes/no): ").strip().lower()
+    if confirmation != "yes":
+        print("Operation cancelled.")
+        exit(0)
+
+    print(f"\nProceeding to move meme files from {SOURCE_DIR} to {dest_dir}")
+    n_files = move_from_target_using_ref(REVIEW_DIR, SOURCE_DIR, dest_dir)
+    print(f"Moved {n_files} matching files to {dest_dir}")
     delete_empty_dir_recursively(REVIEW_DIR)
     exit(0)
 
