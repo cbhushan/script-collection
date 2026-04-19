@@ -126,7 +126,7 @@ def window_intensity(image, quantile=[0.006, 0.994]):
         return out_img
 
 
-def stretch_contast(img, quantile=[0.006, 0.994]):
+def stretch_contast(img, quantile=[0.02, 0.99]):
     """
     Stretches contrast of input RGB Image.
     It applies linear stretching on lightness channel in LAB space.
